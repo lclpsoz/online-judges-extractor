@@ -5,18 +5,18 @@ from tqdm import tqdm
 class userData:
 	# Initialize all attributes, loading from
 	# files when possible.
-	def __init__ (self):
+	def __init__ (self, folder):
 		self.users = {}
 		self.akas = {}
 		try:
-			with open ("users.json", 'r') as usersFile:
+			with open (folder + "users.json", 'r') as usersFile:
 				self.users = json.load (usersFile)
 			print ("users.json loaded!")
 		except EnvironmentError:
 			print ("users.json don't exist on this folder!")
 			print ("Loading users information from usersRatedListLastMonth.json!")
 			try:
-				with open ("usersRatedListLastMonth.json", 'r') as usersRatedListFile:
+				with open (folder + "usersRatedListLastMonth.json", 'r') as usersRatedListFile:
 					usersRatedListLastMonth = json.load (usersRatedListFile)['result']
 					for row in usersRatedListLastMonth:
 						handle = row['handle'].lower()
@@ -27,7 +27,7 @@ class userData:
 				print ("usersRatedListLastMonth.json don't exist on this folder!")
 		
 		try:
-			with open ("akas.json", 'r') as akasFile:
+			with open (folder + "akas.json", 'r') as akasFile:
 				self.akas = json.load (akasFile)
 			print ("akas.json loaded!")
 		except EnvironmentError:
@@ -38,7 +38,7 @@ class userData:
 	def getHandle (self, handle):
 		if not handle in self.akas:
 			self.akas[handle] = requests.get ("https://codeforces.com/profile/" + handle).url.split('/')[-1].lower()
-			with open ("akas.json", 'w') as akasFile:
+			with open (folder + "akas.json", 'w') as akasFile:
 				json.dump (self.akas, akasFile)
 			
 		return self.akas[handle]
@@ -65,7 +65,7 @@ class userData:
 			for user in users['result']:
 				handle = user.pop ('handle').lower()
 				self.users[handle] = user
-			with open ("users.json", 'w') as usersFile:
+			with open (folder + "users.json", 'w') as usersFile:
 				json.dump (self.users, usersFile)
 	
 	# Receive list lst and integer n. Returns a
