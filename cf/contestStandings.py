@@ -4,6 +4,7 @@ import os.path
 from tabulate import tabulate
 from userData import userData
 from abbreviations import abbrev
+from generateHtml import generateHtml
 
 # Needs "true" or "false" at the end and contests ID in the middle
 pageStanding = ["https://codeforces.com/api/contest.standings?contestId=", "&from=1&count=15000&showUnofficial="]
@@ -77,22 +78,6 @@ for i in range (1, len (standingFiltered)):
 print ("__________________Brazilian standings___________________")
 print (tabulate (standingFiltered, headers="firstrow", tablefmt='github'))
 
-with open (folder + "contest" + str (contestId) + flagShow + "_" + country + ".html", "w") as f:
-	html = """<html><table border="1">"""
-	for h in headers:
-		html += "<th>" + h + "</th>"
-	html += "</tr>"
-	for line in standingFiltered:
-		if (line[0] == "#"):
-			continue
-		html += "<tr>"
-		for i in range (len (line)):
-			html += "<td>"
-			if (headers[i] == "HANDLE"):
-				html += '<a href="https://codeforces.com/profile/' + line[i] + '">' + str (line[i]) + "</a>"
-			else:
-				html += str (line[i])
-			html += "</td>"
-		html += "</tr>"
-	html += "</table></html>"
-	f.write (html)
+
+filePathHtml = folder + "contest" + str (contestId) + flagShow + "_" + country + ".html"
+generateHtml (filePathHtml,	headers, standingFiltered)

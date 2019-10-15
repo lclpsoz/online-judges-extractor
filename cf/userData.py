@@ -8,6 +8,7 @@ class userData:
 	def __init__ (self, folder):
 		self.users = {}
 		self.akas = {}
+		self.folder = folder
 		try:
 			with open (folder + "users.json", 'r') as usersFile:
 				self.users = json.load (usersFile)
@@ -36,9 +37,11 @@ class userData:
 	# Receive handle. Return current handle of
 	# the user.
 	def getHandle (self, handle):
+		print ("  Trying to get new handle!")
 		if not handle in self.akas:
 			self.akas[handle] = requests.get ("https://codeforces.com/profile/" + handle).url.split('/')[-1].lower()
-			with open (folder + "akas.json", 'w') as akasFile:
+			print ("  New handle: " + self.akas[handle])
+			with open (self.folder + "akas.json", 'w') as akasFile:
 				json.dump (self.akas, akasFile)
 			
 		return self.akas[handle]
@@ -65,7 +68,7 @@ class userData:
 			for user in users['result']:
 				handle = user.pop ('handle').lower()
 				self.users[handle] = user
-			with open (folder + "users.json", 'w') as usersFile:
+			with open (self.folder + "users.json", 'w') as usersFile:
 				json.dump (self.users, usersFile)
 	
 	# Receive list lst and integer n. Returns a
