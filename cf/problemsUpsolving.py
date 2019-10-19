@@ -83,7 +83,10 @@ for contest in contestsThisYearWithUser:
     if (contestId in userSolvedProblemsPerContest):
         for problem in problems:
             if (not problem['index'] in userSolvedProblemsPerContest[contestId]):
-                userUnsolvedProblems.append ((contestId, problem['index'], problem['name'], problem['rating']))
+                problemRating = -1
+                if ('rating' in problem):
+                    problemRating = problem['rating']
+                userUnsolvedProblems.append ((contestId, problem['index'], problem['name'], problemRating))
 userUnsolvedProblems.sort (key=lambda tup: tup[3])
 
 headers = ['PROBLEM', 'PROBLEM NAME', 'RATING']
@@ -91,7 +94,10 @@ table = []
 for p in userUnsolvedProblems:
     table.append ([(p[0], p[1]), p[2]])
     if (showRating == 'Y'):
-        table[-1].append (p[3])
+        if (p[3] == -1):
+            table[-1].append ('UNAVAILABLE')
+        else:
+            table[-1].append (p[3])
     else:
         table[-1].append ('HIDDEN')
 
