@@ -1,3 +1,7 @@
+# Obtain contest staings from CF contestId.
+# It can filter the results based on specific country and
+# if the user want unofficial participants or not.
+
 import json
 import requests
 import os.path
