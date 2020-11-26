@@ -23,7 +23,7 @@ def requestContestInfo (contestId):
 user = input ("Username: ")
 year = input ("Year: (Integer OR all) ")
 showRating = input ("Show rating of the problem? (Y OR N) ")
-reqNumSubmissions = 2000
+reqNumSubmissions = 10000
 
 delta = 1
 if (year.lower() == "all"):
@@ -55,43 +55,72 @@ for contest in contests:
 
 contestsIdThisYearWithUser = set()
 contestsFails = []
+problems_solved = set()
 for sub in userSubmissions:
     contestId = sub['contestId'] 
-    if (contestId in contestsIdsThisYear):
-        contestsIdThisYearWithUser.add (contestId)
+    if contestId in contestsIdsThisYear:
+        contestsIdThisYearWithUser.add(contestId)
+        problems_solved.add(str(contestId) + sub['problem']['index'])
 
-contestsIdThisYearWithUser = list (contestsIdThisYearWithUser)
-contestsThisYearWithUser = []
-print ("Requesting contests info.")
-for i in tqdm (range (len (contestsIdThisYearWithUser))):
-    contestStandingJson = requestContestInfo (contestsIdThisYearWithUser[i])
-    contestStanding = contestStandingJson.get('result')
-    contestsThisYearWithUser.append (contestStanding)
 
-userSolvedProblemsPerContest = {}
-for sub in userSubmissions:
-    contestId = sub['contestId'] 
-    if (contestId in contestsIdsThisYear and sub['verdict'] == 'OK'):
-        if (not contestId in userSolvedProblemsPerContest):
-            userSolvedProblemsPerContest[contestId] = set ()   
-        userSolvedProblemsPerContest[contestId].add (sub['problem']['index'])
+opt = 0
 
-userUnsolvedProblems = []
-for contest in contestsThisYearWithUser:
-    contestId = contest['contest']['id']
-    problems = contest['problems']
-    if (contestId in userSolvedProblemsPerContest):
-        for problem in problems:
-            if (not problem['index'] in userSolvedProblemsPerContest[contestId]):
-                problemRating = -1
-                if ('rating' in problem):
-                    problemRating = problem['rating']
-                userUnsolvedProblems.append ((contestId, problem['index'], problem['name'], problemRating))
-userUnsolvedProblems.sort (key=lambda tup: tup[3])
+user_unsolved_problems = []
+# Solution based on PROBLEMSET
+if(opt == 0):
+    problemset_url = 'https://codeforces.com/api/problemset.problems'
+    problemset = json.loads (requests.get (problemset_url).text).get('result')
 
-headers = ['PROBLEM', 'PROBLEM NAME', 'RATING']
+    for i in range(len(problemset['problems'])):
+        pb = problemset['problems'][i]
+        pb_stats = problemset['problemStatistics'][i]
+        pb_id = str(pb['contestId']) + str(pb['index'])
+        if pb['contestId'] > 885 and pb['contestId'] in contestsIdThisYearWithUser and pb_id not in problems_solved:
+            user_unsolved_problems.append((pb['contestId'], pb['index'], pb['name'], pb_stats['solvedCount']))
+
+
+else:
+    # Solution based on CONTEST
+
+    contestsIdThisYearWithUser = list (contestsIdThisYearWithUser)
+    contestsThisYearWithUser = []
+    print ("Requesting contests info.")
+    for i in tqdm (range (len (contestsIdThisYearWithUser))):
+        contestStandingJson = requestContestInfo (contestsIdThisYearWithUser[i])
+        contestStanding = contestStandingJson.get('result')
+        contestsThisYearWithUser.append (contestStanding)
+
+    userSolvedProblemsPerContest = {}
+    for sub in userSubmissions:
+        contestId = sub['contestId'] 
+        if (contestId in contestsIdsThisYear and sub['verdict'] == 'OK'):
+            if (not contestId in userSolvedProblemsPerContest):
+                userSolvedProblemsPerContest[contestId] = set ()   
+            userSolvedProblemsPerContest[contestId].add (sub['problem']['index'])
+
+    for contest in contestsThisYearWithUser:
+        contestId = contest['contest']['id']
+        problems = contest['problems']
+        if (contestId in userSolvedProblemsPerContest):
+            for problem in problems:
+                if (not problem['index'] in userSolvedProblemsPerContest[contestId]):
+                    problemRating = -1
+                    if ('rating' in problem):
+                        problemRating = problem['rating']
+                    user_unsolved_problems.append ((contestId, problem['index'], problem['name'], problemRating))
+
+
+
+headers = ['PROBLEM', 'PROBLEM NAME']
+if opt == 0:
+    user_unsolved_problems.sort (key=lambda tup: -tup[3])
+    headers.append('SOLVED COUNT')
+else:
+    user_unsolved_problems.sort (key=lambda tup: tup[3])
+    headers.append('RATING')
+
 table = []
-for p in userUnsolvedProblems:
+for p in user_unsolved_problems:
     table.append ([(p[0], p[1]), p[2]])
     if (showRating == 'Y'):
         if (p[3] == -1):
